@@ -10,6 +10,7 @@
             --primary-hover: #1d4ed8;
             --success: #16a34a;
             --danger: #dc2626;
+            --warning: #d97706;
             --bg: #f8fafc;
             --card-bg: #ffffff;
             --text: #1e293b;
@@ -109,6 +110,13 @@
             border-radius: 20px;
         }
 
+        .attempts-badge {
+            background: #fef3c7;
+            color: var(--warning);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
         .question-text {
             font-weight: 600;
             font-size: 1.1rem;
@@ -126,7 +134,7 @@
         }
 
         .btn-option {
-            background-color: #ffffef;
+            background-color: #ffffff;
             border: 2px solid var(--border);
             border-radius: 8px;
             padding: 12px 16px;
@@ -158,6 +166,15 @@
             background-color: #fee2e2 !important;
             border-color: var(--danger) !important;
             color: #7f1d1d !important;
+            opacity: 0.6;
+        }
+
+        .feedback-text {
+            font-weight: 600;
+            min-height: 24px;
+            margin-bottom: 10px;
+            text-align: left;
+            color: var(--warning);
         }
 
         .btn-action {
@@ -185,7 +202,8 @@
 
         .footer-controls {
             display: flex;
-            justify-content: flex-end;
+            justify-content: space-between;
+            align-items: center;
             margin-top: 15px;
         }
     </style>
@@ -206,6 +224,7 @@
             <p><strong>Type:</strong> Competency-Based Questions (CBQ)</p>
             <p><strong>Total Questions:</strong> <span id="intro-q-count">0</span></p>
             <p><strong>Time Limit:</strong> 45 seconds per question</p>
+            <p><strong>Rules:</strong> 2 chances per question to find the right answer!</p>
         </div>
         <button class="btn-action" onclick="startQuiz()">Start Quiz</button>
     </div>
@@ -215,13 +234,15 @@
         <div class="game-header">
             <span>Score: <span id="live-score">0</span></span>
             <span class="timer-badge">⏱️ <span id="timer">45</span>s</span>
-            <span>Question: <span id="q-idx">1</span>/<span id="q-total">0</span></span>
+            <span class="attempts-badge">Chances: <span id="attempts-left">2</span>/2</span>
+            <span>Q: <span id="q-idx">1</span>/<span id="q-total">0</span></span>
         </div>
 
         <div id="question" class="question-text"></div>
         <div id="options" class="options-grid"></div>
 
         <div class="footer-controls">
+            <div id="feedback" class="feedback-text"></div>
             <button id="next-btn" class="btn-action" style="display: none;" onclick="nextQuestion()">Next Question</button>
         </div>
     </div>
@@ -340,10 +361,20 @@
             }
         ];
 
+        // Audio Objects
+        const correctSound = new Audio('assets/correct.mp3');
+        const wrongSound = new Audio('assets/wrong.mp3');
+
+        function playSound(audio) {
+            audio.currentTime = 0;
+            audio.play().catch(e => console.log("Audio play blocked or file not found:", e));
+        }
+
         let currentQuestionIndex = 0;
         let score = 0;
         let timerVal = 45;
         let timerInterval = null;
+        let attemptsLeft = 2;
 
         window.addEventListener('DOMContentLoaded', () => {
             document.getElementById('intro-q-count').textContent = quizData.length;
@@ -366,10 +397,13 @@
 
         function loadQuestion() {
             timerVal = 45;
+            attemptsLeft = 2;
             document.getElementById('live-score').textContent = score;
             document.getElementById('q-idx').textContent = currentQuestionIndex + 1;
             document.getElementById('q-total').textContent = quizData.length;
+            document.getElementById('attempts-left').textContent = attemptsLeft;
             document.getElementById('next-btn').style.display = 'none';
+            document.getElementById('feedback').textContent = '';
 
             const currentQuiz = quizData[currentQuestionIndex];
             document.getElementById('question').innerText = currentQuiz.question;
@@ -402,30 +436,54 @@
         }
 
         function selectOption(index, button) {
-            clearInterval(timerInterval);
             const correctIndex = quizData[currentQuestionIndex].correct;
             const buttons = document.querySelectorAll(".btn-option");
 
-            buttons.forEach(btn => btn.disabled = true);
-
             if (index === correctIndex) {
+                // Correct Answer
+                clearInterval(timerInterval);
+                playSound(correctSound);
                 button.classList.add("correct");
+                buttons.forEach(btn => btn.disabled = true);
+                
+                // Add score only on 1st or 2nd attempt completion
                 score++;
                 document.getElementById('live-score').textContent = score;
+                document.getElementById('feedback').textContent = "✨ Correct!";
+                document.getElementById('feedback').style.color = "var(--success)";
+                document.getElementById('next-btn').style.display = 'inline-block';
             } else {
+                // Incorrect Answer
+                attemptsLeft--;
+                document.getElementById('attempts-left').textContent = attemptsLeft;
+                playSound(wrongSound);
                 button.classList.add("incorrect");
-                buttons[correctIndex].classList.add("correct");
-            }
+                button.disabled = true;
 
-            document.getElementById('next-btn').style.display = 'inline-block';
+                if (attemptsLeft > 0) {
+                    document.getElementById('feedback').textContent = "❌ Incorrect attempt 1/2. Try again!";
+                    document.getElementById('feedback').style.color = "var(--warning)";
+                } else {
+                    // Out of attempts: reveal answer
+                    clearInterval(timerInterval);
+                    buttons.forEach(btn => btn.disabled = true);
+                    buttons[correctIndex].classList.add("correct");
+                    document.getElementById('feedback').textContent = "❌ Out of chances!";
+                    document.getElementById('feedback').style.color = "var(--danger)";
+                    document.getElementById('next-btn').style.display = 'inline-block';
+                }
+            }
         }
 
         function handleTimeout() {
+            playSound(wrongSound);
             const buttons = document.querySelectorAll(".btn-option");
             buttons.forEach(btn => btn.disabled = true);
             const correctIndex = quizData[currentQuestionIndex].correct;
             buttons[correctIndex].classList.add("correct");
 
+            document.getElementById('feedback').textContent = "⏱️ Time's up!";
+            document.getElementById('feedback').style.color = "var(--danger)";
             document.getElementById('next-btn').style.display = 'inline-block';
         }
 
