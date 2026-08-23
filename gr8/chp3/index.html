@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Science CBQ Quiz: Solutes, Solvents and Solutions</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --bg: #f8fafc;
+            --card-bg: #ffffff;
+            --text: #1e293b;
+            --border: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .screen {
+            display: none;
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* 1. Logo Screen */
+        #logo-screen {
+            display: none;
+            min-height: 300px;
+        }
+
+        #logo-screen.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .app-logo {
+            max-width: 280px;
+            max-height: 160px;
+            width: auto;
+            height: auto;
+            object-fit: contain;
+            display: block;
+            margin: 0 auto;
+        }
+
+        /* UI Cards & Typography */
+        .meta-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        .meta-card p {
+            margin: 8px 0;
+            font-size: 1rem;
+        }
+
+        h1, h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+        }
+
+        /* Game Header */
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            font-size: 0.95rem;
+        }
+
+        .timer-badge {
+            background: #fee2e2;
+            color: var(--danger);
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        .question-text {
+            font-weight: 600;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+            color: var(--text);
+            text-align: left;
+            line-height: 1.5;
+        }
+
+        .options-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-option {
+            background-color: #ffffff;
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            padding: 12px 16px;
+            font-size: 1rem;
+            text-align: left;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            color: var(--text);
+            width: 100%;
+        }
+
+        .btn-option:hover:not(:disabled) {
+            background-color: #eff6ff;
+            border-color: var(--primary);
+        }
+
+        .btn-option:disabled {
+            cursor: not-allowed;
+        }
+
+        .btn-option.correct {
+            background-color: #dcfce7 !important;
+            border-color: var(--success) !important;
+            color: #14532d !important;
+            font-weight: bold;
+        }
+
+        .btn-option.incorrect {
+            background-color: #fee2e2 !important;
+            border-color: var(--danger) !important;
+            color: #7f1d1d !important;
+        }
+
+        .btn-action {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-weight: 600;
+        }
+
+        .btn-action:hover {
+            background-color: var(--primary-hover);
+        }
+
+        .score-display {
+            font-size: 2.5rem;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 15px 0;
+        }
+
+        .footer-controls {
+            display: flex;
+            justify-content: flex-end;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. Logo Screen -->
+    <div id="logo-screen" class="screen active">
+        <img src="assets/logo.png" alt="Innovine Logo" class="app-logo">
+    </div>
+
+    <!-- 2. Intro Screen -->
+    <div id="intro-screen" class="screen">
+        <h1>Quiz Overview</h1>
+        <div class="meta-card">
+            <p><strong>Subject:</strong> General Science</p>
+            <p><strong>Topic:</strong> Solutes, Solvents and Solutions</p>
+            <p><strong>Type:</strong> Competency-Based Questions (CBQ)</p>
+            <p><strong>Total Questions:</strong> <span id="intro-q-count">0</span></p>
+            <p><strong>Time Limit:</strong> 45 seconds per question</p>
+        </div>
+        <button class="btn-action" onclick="startQuiz()">Start Quiz</button>
+    </div>
+
+    <!-- 3. Game Area Screen -->
+    <div id="game-screen" class="screen">
+        <div class="game-header">
+            <span>Score: <span id="live-score">0</span></span>
+            <span class="timer-badge">⏱️ <span id="timer">45</span>s</span>
+            <span>Question: <span id="q-idx">1</span>/<span id="q-total">0</span></span>
+        </div>
+
+        <div id="question" class="question-text"></div>
+        <div id="options" class="options-grid"></div>
+
+        <div class="footer-controls">
+            <button id="next-btn" class="btn-action" style="display: none;" onclick="nextQuestion()">Next Question</button>
+        </div>
+    </div>
+
+    <!-- 4. End Screen -->
+    <div id="end-screen" class="screen">
+        <h2>Quiz Completed!</h2>
+        <div class="meta-card" style="text-align: center;">
+            <p>Your Final Score</p>
+            <div id="final-score" class="score-display">0 / 0</div>
+        </div>
+        <button class="btn-action" onclick="restartQuiz()">Try Again</button>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                question: "Q1. Mukesh prepared lemonade using cold water and noticed sugar dissolved very slowly. His mother suggested using warm water. Why did sugar dissolve faster in warm water?",
+                options: [
+                    "A) Warm water has more color",
+                    "B) Water particles move faster and spaces between them increase when heated",
+                    "C) Sugar becomes lighter in weight when heated",
+                    "D) Warm water has higher density than cold water"
+                ],
+                correct: 1
+            },
+            {
+                question: "Q2. During hot summer afternoons, a fisherman noticed fish frequently coming to the surface of a shallow pond. What scientific reason explains this behavior?",
+                options: [
+                    "A) Dissolved oxygen decreases as water temperature increases",
+                    "B) Dissolved oxygen increases as water temperature increases",
+                    "C) Water salinity increases near the surface",
+                    "D) Water density increases at higher temperatures"
+                ],
+                correct: 0
+            },
+            {
+                question: "Q3. A solid wooden block floats on water, whereas a tiny iron nail sinks to the bottom immediately. Which statement correctly explains this observation?",
+                options: [
+                    "A) Wood absorbs water to become light",
+                    "B) Iron nail displaces more water than the block",
+                    "C) The density of wood is less than water, while iron is denser than water",
+                    "D) Iron nail contains air pockets inside it"
+                ],
+                correct: 2
+            },
+            {
+                question: "Q4. A student lowered a thread-tied stone into a measuring cylinder containing 50 mL of water. The water level rose to 68 mL. What does the difference of 18 mL represent?",
+                options: [
+                    "A) The mass of the stone",
+                    "B) The density of the stone",
+                    "C) The volume of the stone",
+                    "D) The weight of the stone"
+                ],
+                correct: 2
+            },
+            {
+                question: "Q5. Why is swimming significantly easier in the Dead Sea compared to a freshwater swimming pool?",
+                options: [
+                    "A) Fresh water has higher density than salt water",
+                    "B) Dissolved salts increase water density, providing greater upward buoyant force",
+                    "C) High temperature of sea water decreases human body weight",
+                    "D) Salt water reduces gravity acting on the human body"
+                ],
+                correct: 1
+            },
+            {
+                question: "Q6. An empty sealed plastic bottle floats effortlessly on water, but the same bottle filled completely with sand sinks. Why does this happen?",
+                options: [
+                    "A) Trapped air in the empty bottle lowers its overall average density below water's density",
+                    "B) Sand decreases the overall mass of the bottle",
+                    "C) Plastic reacts chemically with water when filled with sand",
+                    "D) Empty plastic bottle has no mass at all"
+                ],
+                correct: 0
+            },
+            {
+                question: "Q7. When a cold bottle of soft drink is opened, bubbles rapidly escape with a fizzing sound. What causes this to happen?",
+                options: [
+                    "A) Pressure drops, reducing the solubility of dissolved carbon dioxide gas",
+                    "B) Temperature suddenly decreases, making gas less soluble",
+                    "C) Carbon dioxide gas reacts with air to form liquid water",
+                    "D) The liquid turns into a non-uniform mixture instantly"
+                ],
+                correct: 0
+            },
+            {
+                question: "Q8. You keep adding salt spoon by spoon to a glass of water while stirring continuously until extra salt begins settling at the bottom. What type of solution is formed at this stage?",
+                options: [
+                    "A) Unsaturated solution",
+                    "B) Concentrated unsaturated solution",
+                    "C) Saturated solution",
+                    "D) Non-uniform solvent"
+                ],
+                correct: 2
+            },
+            {
+                question: "Q9. Why does ice float on top of liquid water, forming a protective layer that helps aquatic life survive cold winters?",
+                options: [
+                    "A) Water contracts when it freezes, making ice denser",
+                    "B) Water expands upon freezing, creating an open crystal structure that makes ice less dense than liquid water",
+                    "C) Ice traps carbon dioxide gas which lifts it to the surface",
+                    "D) Liquid water at 4°C is less dense and rises above ice"
+                ],
+                correct: 1
+            },
+            {
+                question: "Q10. While taking a volume reading of water in a glass measuring cylinder, how should the student align their line of sight to avoid measurement errors?",
+                options: [
+                    "A) Above the meniscus level looking downwards",
+                    "B) At eye level, reading at the top curved edge of the meniscus",
+                    "C) At eye level, reading at the bottom of the curved meniscus",
+                    "D) Below the cylinder base looking upwards"
+                ],
+                correct: 2
+            }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let timerVal = 45;
+        let timerInterval = null;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('intro-q-count').textContent = quizData.length;
+            setTimeout(() => {
+                switchScreen('intro-screen');
+            }, 5000);
+        });
+
+        function switchScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            switchScreen('game-screen');
+            loadQuestion();
+        }
+
+        function loadQuestion() {
+            timerVal = 45;
+            document.getElementById('live-score').textContent = score;
+            document.getElementById('q-idx').textContent = currentQuestionIndex + 1;
+            document.getElementById('q-total').textContent = quizData.length;
+            document.getElementById('next-btn').style.display = 'none';
+
+            const currentQuiz = quizData[currentQuestionIndex];
+            document.getElementById('question').innerText = currentQuiz.question;
+
+            const optionsElement = document.getElementById('options');
+            optionsElement.innerHTML = "";
+
+            currentQuiz.options.forEach((option, index) => {
+                const button = document.createElement("button");
+                button.innerText = option;
+                button.classList.add("btn-option");
+                button.onclick = () => selectOption(index, button);
+                optionsElement.appendChild(button);
+            });
+
+            startTimer();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            document.getElementById('timer').textContent = timerVal;
+            timerInterval = setInterval(() => {
+                timerVal--;
+                document.getElementById('timer').textContent = timerVal;
+                if (timerVal <= 0) {
+                    clearInterval(timerInterval);
+                    handleTimeout();
+                }
+            }, 1000);
+        }
+
+        function selectOption(index, button) {
+            clearInterval(timerInterval);
+            const correctIndex = quizData[currentQuestionIndex].correct;
+            const buttons = document.querySelectorAll(".btn-option");
+
+            buttons.forEach(btn => btn.disabled = true);
+
+            if (index === correctIndex) {
+                button.classList.add("correct");
+                score++;
+                document.getElementById('live-score').textContent = score;
+            } else {
+                button.classList.add("incorrect");
+                buttons[correctIndex].classList.add("correct");
+            }
+
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+
+        function handleTimeout() {
+            const buttons = document.querySelectorAll(".btn-option");
+            buttons.forEach(btn => btn.disabled = true);
+            const correctIndex = quizData[currentQuestionIndex].correct;
+            buttons[correctIndex].classList.add("correct");
+
+            document.getElementById('next-btn').style.display = 'inline-block';
+        }
+
+        function nextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                loadQuestion();
+            } else {
+                endQuiz();
+            }
+        }
+
+        function endQuiz() {
+            clearInterval(timerInterval);
+            document.getElementById('final-score').textContent = `${score} / ${quizData.length}`;
+            switchScreen('end-screen');
+        }
+
+        function restartQuiz() {
+            switchScreen('intro-screen');
+        }
+    </script>
+</body>
+</html>
